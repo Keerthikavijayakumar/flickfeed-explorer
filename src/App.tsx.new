@@ -1,0 +1,157 @@
+import { useState, useEffect } from 'react';
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from './lib/auth';
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Navbar } from "./components/Navbar";
+import Index from "./pages/Index";
+import { MovieDetail } from "./pages/MovieDetail";
+import { VideoPlayer } from "./components/VideoPlayer";
+import { MyList } from "./pages/MyList";
+import { SearchResults } from "./pages/SearchResults";
+import MovieTrivia from "./pages/games/MovieTrivia";
+import GuessTheMovie from "./pages/games/GuessTheMovie";
+import QuoteQuiz from "./pages/games/QuoteQuiz";
+import SceneShuffle from "./pages/games/SceneShuffle";
+import NotFound from "./pages/NotFound";
+import { Movie, TVShow } from "./types/movie";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { TestComponent } from "./components/TestComponent";
+import { APITest } from "./components/APITest";
+
+// Configure QueryClient with better error handling and logging
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
+});
+
+const App = () => {
+  const [myList, setMyList] = useState<Movie[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<(Movie | TVShow)[]>([]);
+
+  console.log('🚀 App component rendered');
+
+  // Load My List from localStorage on app start
+  useEffect(() => {
+    const savedList = localStorage.getItem('netflix-my-list');
+    if (savedList) {
+      setMyList(JSON.parse(savedList));
+    }
+  }, []);
+
+  // Save My List to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('netflix-my-list', JSON.stringify(myList));
+  }, [myList]);
+
+  // Handle adding/removing movies from My List
+  const handleAddToList = (item: Movie) => {
+    setMyList(prev => {
+      const isAlreadyInList = prev.some(m => m.id === item.id);
+      if (isAlreadyInList) {
+        return prev.filter(m => m.id !== item.id);
+      } else {
+        return [...prev, item];
+      }
+    });
+  };
+
+  // Handle search functionality
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <BrowserRouter>
+            <ErrorBoundary>
+              <div className="min-h-screen bg-background">
+                <Navbar onSearch={handleSearch} />
+                <Routes>
+                  {/* Auth Routes */}
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  
+                  {/* Main Routes */}
+                  <Route 
+                    path="/" 
+                    element={<Index onAddToList={handleAddToList} myList={myList} />} 
+                  />
+                  <Route 
+                    path="/movie/:movieId" 
+                    element={<MovieDetail onAddToList={handleAddToList} myList={myList} />} 
+                  />
+                  <Route 
+                    path="/player/:mediaType/:movieId" 
+                    element={<VideoPlayer />} 
+                  />
+                  <Route 
+                    path="/player/:movieId" 
+                    element={<VideoPlayer />} 
+                  />
+                  <Route 
+                    path="/my-list" 
+                    element={
+                      <ProtectedRoute>
+                        <MyList />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/search" 
+                    element={
+                      <SearchResults 
+                        searchQuery={searchQuery}
+                        searchResults={searchResults}
+                        onAddToList={handleAddToList}
+                      />
+                    } 
+                  />
+                  <Route path="/games/trivia" element={<MovieTrivia />} />
+                  <Route path="/games/guess" element={<GuessTheMovie />} />
+                  <Route path="/games/quotes" element={<QuoteQuiz />} />
+                  <Route path="/games/shuffle" element={<SceneShuffle />} />
+                  <Route 
+                    path="/tv-shows" 
+                    element={<Index onAddToList={handleAddToList} myList={myList} />} 
+                  />
+                  <Route 
+                    path="/movies" 
+                    element={<Index onAddToList={handleAddToList} myList={myList} />} 
+                  />
+                  <Route 
+                    path="/test" 
+                    element={<TestComponent />} 
+                  />
+                  <Route 
+                    path="/api-test" 
+                    element={<APITest />} 
+                  />
+                  {/* Catch-all route */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <Toaster />
+              <Sonner />
+            </ErrorBoundary>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
+
+export default App;
