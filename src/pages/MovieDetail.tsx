@@ -1,10 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, Plus, ThumbsUp, ThumbsDown, Share, ArrowLeft, Calendar, Clock, Star, Users } from 'lucide-react';
+import { Play, Plus, ThumbsUp, ThumbsDown, Share, ArrowLeft, Calendar, Clock, Star, Users, ExternalLink, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Carousel } from '@/components/Carousel';
 import { useMovieDetails, useMovieCredits, useMovieVideos, useSimilarMovies, useRecommendedMovies } from '@/hooks/useMovies';
 import { Movie, TVShow } from '@/types/movie';
 import { getImageUrl, getBackdropUrl, formatDate, formatRuntime, formatCurrency } from '@/services/api';
+import { tubiIntegration, getStreamingSearchUrls } from '@/services/streaming-service';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -26,6 +27,10 @@ export const MovieDetail = ({ onAddToList, myList }: MovieDetailProps) => {
   const { data: recommendedMovies, isLoading: recommendedLoading } = useRecommendedMovies(Number(movieId));
 
   const isInMyList = movie && myList.some(m => m.id === movie.id);
+  
+  // Check if movie might be available on Tubi
+  const isPotentiallyOnTubi = movie ? tubiIntegration.isPotentiallyAvailable(movie) : false;
+  const streamingUrls = movie ? getStreamingSearchUrls(movie.title, movie.release_date?.split('-')[0]) : null;
 
   const handlePlay = () => {
     if (movie) {
@@ -165,9 +170,35 @@ export const MovieDetail = ({ onAddToList, myList }: MovieDetailProps) => {
                   </span>
                 </div>
                 
-                <p className="text-lg text-gray-200 mb-8 leading-relaxed">
+                <p className="text-lg text-gray-200 mb-6 leading-relaxed">
                   {movie.overview}
                 </p>
+                
+                {/* Streaming Notice */}
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <Info className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                    <div className="text-sm text-blue-200">
+                      <strong>Streaming Info:</strong> This platform shows movie trailers and information. 
+                      To watch the full movie, use the buttons below to discover legal streaming options.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tubi Availability Notice */}
+                {isPotentiallyOnTubi && (
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center mt-0.5 flex-shrink-0">
+                        <span className="text-xs font-bold text-white">T</span>
+                      </div>
+                      <div className="text-sm text-green-200">
+                        <strong>Free on Tubi:</strong> This movie might be available for free on Tubi! 
+                        Click "Watch Free on Tubi" to check availability.
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {/* Action Buttons */}
                 <div className="flex flex-wrap gap-4 mb-8">
@@ -176,7 +207,29 @@ export const MovieDetail = ({ onAddToList, myList }: MovieDetailProps) => {
                     className="btn-netflix flex items-center gap-2 text-lg px-8 py-3 rounded-lg font-semibold"
                   >
                     <Play className="h-6 w-6" fill="white" />
-                    Play Now
+                    Play Trailer
+                  </Button>
+                  
+                  {/* Tubi Button - Show prominently if potentially available */}
+                  {isPotentiallyOnTubi && streamingUrls && (
+                    <Button
+                      onClick={() => window.open(streamingUrls.tubi, '_blank')}
+                      className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 text-lg px-8 py-3 rounded-lg font-semibold"
+                    >
+                      <div className="w-5 h-5 bg-white rounded flex items-center justify-center">
+                        <span className="text-xs font-bold text-green-600">T</span>
+                      </div>
+                      Watch Free on Tubi
+                    </Button>
+                  )}
+                  
+                  <Button
+                    onClick={() => streamingUrls && window.open(streamingUrls.justWatch, '_blank')}
+                    variant="secondary"
+                    className="btn-secondary flex items-center gap-2 text-lg px-8 py-3 rounded-lg font-semibold"
+                  >
+                    <ExternalLink className="h-6 w-6" />
+                    Find Where to Watch
                   </Button>
                   
                   <Button

@@ -311,6 +311,28 @@ export const Navbar = ({ onSearch }: NavbarProps) => {
                 </div>
                 <Button 
                   variant="ghost" 
+                  className="w-full justify-start" 
+                  onClick={() => { 
+                    navigate('/profile'); 
+                    closeMobileMenu(); 
+                  }}
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  className="w-full justify-start" 
+                  onClick={() => { 
+                    navigate('/subscription'); 
+                    closeMobileMenu(); 
+                  }}
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  Subscription
+                </Button>
+                <Button 
+                  variant="ghost" 
                   className="w-full justify-start text-red-400 hover:text-red-300" 
                   onClick={() => { 
                     signOut(); 

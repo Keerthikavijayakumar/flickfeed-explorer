@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from "./lib/auth-context";
 import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import Profile from "./pages/Profile";
+import Subscription from "./pages/Subscription";
 import FeelingLucky from "./pages/FeelingLucky";
 import MovieTrivia from "./pages/games/MovieTrivia";
 import GuessTheMovie from "./pages/games/GuessTheMovie";
@@ -120,7 +122,19 @@ const App = () => {
                     path="/login" 
                     element={<AuthRedirectIfLoggedIn><Login /></AuthRedirectIfLoggedIn>} 
                   />
-                  <Route path="/signup" element={<Signup />} />
+                  <Route 
+                    path="/signup" 
+                    element={<AuthRedirectIfLoggedIn><Signup /></AuthRedirectIfLoggedIn>} 
+                  />
+                  <Route path="/subscription" element={<Subscription />} />
+                  <Route 
+                    path="/profile" 
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    } 
+                  />
 
                   {/* Make Landing the homepage with auth redirect */}
                   <Route path="/" element={<LandingPage />} />

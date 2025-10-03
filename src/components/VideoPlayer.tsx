@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Play } from 'lucide-react';
+import { ArrowLeft, Play, ExternalLink, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useMovieDetails, useMovieVideos } from '@/hooks/useMovies';
-import { getBackdropUrl, getYouTubeEmbedUrl } from '@/services/api';
+import { getBackdropUrl, getYouTubeEmbedUrl, getYouTubeUrl } from '@/services/api';
+import { tubiIntegration, getStreamingSearchUrls } from '@/services/streaming-service';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export const VideoPlayer = () => {
@@ -47,6 +48,10 @@ export const VideoPlayer = () => {
 	// Fetch movie details and videos only if we have a valid movieId
 	const { data: movie, isLoading: movieLoading, error: movieError } = useMovieDetails(validMovieId);
 	const { data: videos, isLoading: videosLoading, error: videosError } = useMovieVideos(validMovieId);
+	
+	// Check Tubi availability and get streaming URLs
+	const isPotentiallyOnTubi = movie ? tubiIntegration.isPotentiallyAvailable(movie) : false;
+	const streamingUrls = movie ? getStreamingSearchUrls(movie.title, movie.release_date?.split('-')[0]) : null;
 
 	// Select a YouTube video
 	useEffect(() => {
@@ -132,6 +137,78 @@ export const VideoPlayer = () => {
 						style={{ backgroundImage: `url(${getBackdropUrl(movie.backdrop_path, 'original')})` }}
 					/>
 					<div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-black/80 backdrop-blur-sm" />
+					
+					{/* Content */}
+					<div className="absolute inset-0 flex items-center justify-center z-10">
+						<div className="text-center max-w-2xl mx-auto px-8">
+							<div className="mb-8">
+								<div className="w-32 h-32 bg-netflix-red/20 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-netflix-red">
+									<AlertTriangle className="h-16 w-16 text-netflix-red" />
+								</div>
+							</div>
+							<h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
+								{movie.title}
+							</h1>
+							<p className="text-xl text-gray-300 mb-8">
+								Full movie not available for streaming
+							</p>
+							
+							<Alert className="border-yellow-500 bg-yellow-500/10 mb-8 text-left">
+								<AlertTriangle className="h-4 w-4" />
+								<AlertDescription className="text-yellow-400">
+									<strong>Note:</strong> This platform shows movie information and trailers from TMDB. 
+									Full movies require subscriptions to legal streaming services like Netflix, Amazon Prime, or Hulu.
+								</AlertDescription>
+							</Alert>
+
+							<div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+								{/* Tubi Button - Show prominently if potentially available */}
+								{isPotentiallyOnTubi && streamingUrls && (
+									<Button 
+										onClick={() => window.open(streamingUrls.tubi, '_blank')} 
+										className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
+										size="lg"
+									>
+										<div className="w-5 h-5 bg-white rounded flex items-center justify-center mr-2">
+											<span className="text-xs font-bold text-green-600">T</span>
+										</div>
+										Watch Free on Tubi
+									</Button>
+								)}
+								
+								<Button 
+									onClick={() => streamingUrls ? window.open(streamingUrls.justWatch, '_blank') : window.open(`https://www.google.com/search?q=${encodeURIComponent(movie.title + ' ' + movie.release_date?.split('-')[0])} watch online`, '_blank')} 
+									className="btn-netflix px-8 py-3"
+									size="lg"
+								>
+									<ExternalLink className="h-5 w-5 mr-2" />
+									Find Where to Watch
+								</Button>
+								<Button 
+									onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(movie.title + ' ' + movie.release_date?.split('-')[0] + ' trailer')}`, '_blank')} 
+									variant="secondary"
+									size="lg"
+									className="px-8 py-3"
+								>
+									<Play className="h-5 w-5 mr-2" />
+									Search for Trailer
+								</Button>
+							</div>
+
+							<div className="flex gap-4 justify-center">
+								<Button 
+									onClick={goBack} 
+									variant="ghost"
+									size="lg"
+									className="px-8 py-3 text-white hover:bg-white/20"
+								>
+									<ArrowLeft className="h-5 w-5 mr-2" />
+									Go Back
+								</Button>
+							</div>
+						</div>
+					</div>
+
 					<div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/80 to-transparent p-6 z-20">
 						<Button variant="ghost" size="sm" onClick={goBack} className="text-white hover:bg-white/20 transition-colors">
 							<ArrowLeft className="h-5 w-5 mr-2" />

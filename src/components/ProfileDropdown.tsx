@@ -57,6 +57,14 @@ export const ProfileDropdown = () => {
         
         <DropdownMenuItem 
           className="group cursor-pointer" 
+          onClick={() => navigate('/profile')}
+        >
+          <User className="mr-2 h-4 w-4 text-netflix-red group-hover:text-white transition-colors" />
+          Profile
+        </DropdownMenuItem>
+
+        <DropdownMenuItem 
+          className="group cursor-pointer" 
           onClick={() => navigate('/my-list')}
         >
           <Heart className="mr-2 h-4 w-4 text-netflix-red group-hover:text-white transition-colors" />
@@ -65,10 +73,10 @@ export const ProfileDropdown = () => {
         
         <DropdownMenuItem 
           className="group cursor-pointer" 
-          onClick={() => navigate('/browse')}
+          onClick={() => navigate('/subscription')}
         >
-          <User className="mr-2 h-4 w-4 text-netflix-red group-hover:text-white transition-colors" />
-          Browse
+          <Settings className="mr-2 h-4 w-4 text-netflix-red group-hover:text-white transition-colors" />
+          Subscription
         </DropdownMenuItem>
         
         <DropdownMenuSeparator className="bg-border" />
